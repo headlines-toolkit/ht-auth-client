@@ -3,8 +3,6 @@
 
 import 'dart:async';
 
-import 'package:ht_auth_client/src/models/user.dart';
-// ignore: unused_import, allows documenting exceptions without causing warnings
 import 'package:ht_shared/ht_shared.dart';
 
 /// {@template ht_auth_client}

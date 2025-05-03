@@ -3,4 +3,3 @@
 library;
 
 export 'src/ht_auth_client.dart';
-export 'src/models/user.dart';
