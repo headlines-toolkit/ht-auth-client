@@ -1,4 +1,6 @@
-/// A Very Good Project created by Very Good CLI.
+/// Defines the abstract interface (`HtAuthClient`) for authentication
+/// operations within the Headlines Toolkit.
 library;
 
 export 'src/ht_auth_client.dart';
+export 'src/models/user.dart';
