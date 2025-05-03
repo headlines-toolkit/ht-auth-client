@@ -6,7 +6,7 @@
 
 This package defines the abstract interface (`HtAuthClient`) for authentication operations within the Headlines Toolkit ecosystem. It provides a contract that concrete implementations (e.g., API clients, Firebase clients, in-memory mocks) must adhere to.
 
-The interface supports both an email+code passwordless flow and an anonymous authentication flow.
+The interface supports both an email+code password-less authentication and an anonymous authentication flow.
 
 ## Getting Started
 
