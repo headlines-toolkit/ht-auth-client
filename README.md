@@ -35,8 +35,8 @@ The `HtAuthClient` interface defines the following core authentication capabilit
 *   **`authStateChanges`**: A `Stream<User?>` that emits the current authenticated `User` or `null` whenever the authentication state changes (sign-in, sign-out). Ideal for reactive UI updates.
 *   **`getCurrentUser()`**: An asynchronous method `Future<User?>` to retrieve the currently signed-in `User`, if any.
 *   **`requestSignInCode(String email)`**: Initiates the passwordless sign-in/sign-up flow by requesting a verification code to be sent to the user's email. Returns `Future<void>`.
-*   **`verifySignInCode(String email, String code)`**: Verifies the email code provided by the user. On success, completes the sign-in/sign-up process and returns the authenticated `Future<User>`. Handles linking if the user was previously anonymous.
-*   **`signInAnonymously()`**: Signs the user in anonymously, creating a temporary user identity on the backend and returning the anonymous `Future<User>`.
+*   **`verifySignInCode(String email, String code)`**: Verifies the email code provided by the user. On success, completes the sign-in/sign-up process and returns an `Future<AuthSuccessResponse>` containing the authenticated `User` and token. Handles linking if the user was previously anonymous.
+*   **`signInAnonymously()`**: Signs the user in anonymously, creating a temporary user identity on the backend and returning an `Future<AuthSuccessResponse>` containing the anonymous `User` and token.
 *   **`signOut()`**: Signs out the current user (normal or anonymous). Returns `Future<void>`.
 
 Error handling is standardized using exceptions defined in the `ht_shared` package. Implementations must map underlying errors to appropriate `HtHttpException` subtypes.
@@ -76,8 +76,10 @@ Future<void> startEmailSignIn(String email) async {
 
 Future<void> verifyCode(String email, String code) async {
   try {
-    final user = await authClient.verifySignInCode(email, code);
-    print('Successfully signed in/up user: ${user.id}');
+    final authResponse = await authClient.verifySignInCode(email, code);
+    final user = authResponse.user;
+    final token = authResponse.token;
+    print('Successfully signed in/up user: ${user.id}, token: $token');
     // authStateChanges will emit the new user
   } on AuthenticationException catch (e) {
     print('Invalid code: ${e.message}');
@@ -94,8 +96,10 @@ Future<void> verifyCode(String email, String code) async {
 
 Future<void> signInAnon() async {
   try {
-    final user = await authClient.signInAnonymously();
-    print('Signed in anonymously: ${user.id}');
+    final authResponse = await authClient.signInAnonymously();
+    final user = authResponse.user;
+    final token = authResponse.token;
+    print('Signed in anonymously: ${user.id}, token: $token');
     // authStateChanges will emit the new anonymous user
   } on NetworkException {
     print('Network error signing in anonymously.');
