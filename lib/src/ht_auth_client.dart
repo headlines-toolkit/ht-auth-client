@@ -69,13 +69,15 @@ abstract class HtAuthClient {
   /// 1. Log the user in (if email existed) or create the account and log in
   ///    (if email was new).
   /// 2. Issue an authentication token (e.g., JWT).
-  /// 3. Return the authenticated [User] object.
+  /// 3. Return the authenticated [User] object and token in an
+  ///    [AuthSuccessResponse].
   ///
   /// If the user was previously authenticated anonymously, the implementation
   /// (likely the backend) should handle linking the anonymous data to the
   /// newly verified permanent account.
   ///
-  /// Returns the authenticated [User] upon successful verification.
+  /// Returns an [AuthSuccessResponse] containing the authenticated [User] and
+  /// token upon successful verification.
   ///
   /// Throws:
   /// - [InvalidInputException] if the email format is invalid, the code format
@@ -88,7 +90,7 @@ abstract class HtAuthClient {
   /// - [ServerException] for backend errors during verification or account
   ///   creation/linking.
   /// - [OperationFailedException] for other failures.
-  Future<User> verifySignInCode(String email, String code);
+  Future<AuthSuccessResponse> verifySignInCode(String email, String code);
 
   /// Signs in the user anonymously.
   ///
@@ -96,18 +98,20 @@ abstract class HtAuthClient {
   /// 1. Create a new anonymous user record (e.g., with `isAnonymous: true`).
   /// 2. Generate a unique user ID for this anonymous user.
   /// 3. Issue an authentication token associated with this anonymous ID.
-  /// 4. Return the newly created anonymous [User] object.
+  /// 4. Return the newly created anonymous [User] object and token in an
+  ///    [AuthSuccessResponse].
   ///
   /// This allows users to use the application and potentially save data
   /// before creating a permanent account.
   ///
-  /// Returns the anonymous [User] upon successful anonymous sign-in.
+  /// Returns an [AuthSuccessResponse] containing the anonymous [User] and
+  /// token upon successful anonymous sign-in.
   ///
   /// Throws:
   /// - [NetworkException] for network issues during the request.
   /// - [ServerException] for backend errors during anonymous user creation.
   /// - [OperationFailedException] for other failures.
-  Future<User> signInAnonymously();
+  Future<AuthSuccessResponse> signInAnonymously();
 
   /// Signs out the current user (whether authenticated normally or anonymously).
   ///
