@@ -43,54 +43,51 @@ abstract class HtAuthClient {
 
   /// Initiates the sign-in/sign-up process using the email+code flow.
   ///
-  /// Takes the user's [email] address. The implementation should trigger the
-  /// backend to generate a time-limited verification code and send it to the
-  /// provided email address.
-  ///
-  /// The backend determines if this is a sign-in or sign-up based on whether
-  /// the email already exists.
+  /// This method is context-aware.
+  /// - For standard flows, it triggers the backend to send a verification code
+  ///   to the user's [email].
+  /// - For privileged flows (e.g., dashboard login), setting
+  ///   [isDashboardLogin] to `true` signals the backend to perform stricter
+  ///   validation (e.g., checking if the user exists and has required roles)
+  ///   before sending a code.
   ///
   /// Throws:
   /// - [InvalidInputException] if the email format is invalid.
-  /// - [NetworkException] if the request to the backend fails due to network
-  ///   issues.
-  /// - [ServerException] if the backend encounters an unexpected error while
-  ///   processing the request or sending the email.
-  /// - [OperationFailedException] for other non-network/server related
-  ///   failures during the process.
-  Future<void> requestSignInCode(String email);
+  /// - [UnauthorizedException] if [isDashboardLogin] is true and the user
+  ///   does not exist.
+  /// - [ForbiddenException] if [isDashboardLogin] is true and the user lacks
+  ///   the required permissions.
+  /// - [NetworkException] for network issues.
+  /// - [ServerException] for backend errors.
+  Future<void> requestSignInCode(
+    String email, {
+    bool isDashboardLogin = false,
+  });
 
   /// Verifies the email code provided by the user and completes sign-in/sign-up.
   ///
-  /// Takes the user's [email] and the 6-digit [code] they received.
-  /// The implementation should send these to the backend for verification.
+  /// This method is context-aware.
+  /// - For standard flows, it verifies the [code] for the given [email] and
+  ///   either signs in an existing user or creates a new one.
+  /// - For privileged flows (e.g., dashboard login), setting
+  ///   [isDashboardLogin] to `true` ensures that the verification process
+  ///   is strictly for login and will not create a new account.
   ///
-  /// If verification is successful, the backend should:
-  /// 1. Log the user in (if email existed) or create the account and log in
-  ///    (if email was new).
-  /// 2. Issue an authentication token (e.g., JWT).
-  /// 3. Return the authenticated [User] object and token in an
-  ///    [AuthSuccessResponse].
-  ///
-  /// If the user was previously authenticated anonymously, the implementation
-  /// (likely the backend) should handle linking the anonymous data to the
-  /// newly verified permanent account.
-  ///
-  /// Returns an [AuthSuccessResponse] containing the authenticated [User] and
-  /// token upon successful verification.
+  /// On success, returns an [AuthSuccessResponse] containing the authenticated
+  /// [User] and a new token.
   ///
   /// Throws:
-  /// - [InvalidInputException] if the email format is invalid, the code format
-  ///   is invalid, or the code is incorrect/expired.
-  /// - [AuthenticationException] if the code verification fails specifically
-  ///   due to invalid credentials (wrong code).
-  /// - [NotFoundException] if the backend logic requires the email to exist
-  ///   from a previous `requestSignInCode` call and it doesn't (edge case).
-  /// - [NetworkException] for network issues during verification.
-  /// - [ServerException] for backend errors during verification or account
-  ///   creation/linking.
-  /// - [OperationFailedException] for other failures.
-  Future<AuthSuccessResponse> verifySignInCode(String email, String code);
+  /// - [InvalidInputException] if the email or code format is invalid.
+  /// - [AuthenticationException] if the code is incorrect or expired.
+  /// - [NotFoundException] if [isDashboardLogin] is true and the user account
+  ///   does not exist (as a safeguard).
+  /// - [NetworkException] for network issues.
+  /// - [ServerException] for backend errors.
+  Future<AuthSuccessResponse> verifySignInCode(
+    String email,
+    String code, {
+    bool isDashboardLogin = false,
+  });
 
   /// Signs in the user anonymously.
   ///
