@@ -34,10 +34,13 @@ The `HtAuthClient` interface defines the following core authentication capabilit
 
 *   **`authStateChanges`**: A `Stream<User?>` that emits the current authenticated `User` or `null` whenever the authentication state changes (sign-in, sign-out). Ideal for reactive UI updates.
 *   **`getCurrentUser()`**: An asynchronous method `Future<User?>` to retrieve the currently signed-in `User`, if any.
-*   **`requestSignInCode(String email)`**: Initiates the passwordless sign-in/sign-up flow by requesting a verification code to be sent to the user's email. Returns `Future<void>`.
-*   **`verifySignInCode(String email, String code)`**: Verifies the email code provided by the user. On success, completes the sign-in/sign-up process and returns an `Future<AuthSuccessResponse>` containing the authenticated `User` and token. Handles linking if the user was previously anonymous.
-*   **`signInAnonymously()`**: Signs the user in anonymously, creating a temporary user identity on the backend and returning an `Future<AuthSuccessResponse>` containing the anonymous `User` and token.
-*   **`signOut()`**: Signs out the current user (normal or anonymous). Returns `Future<void>`.
+*   **`requestSignInCode(String email, {bool isDashboardLogin = false})`**: Initiates the passwordless sign-in flow. It's context-aware: for standard sign-in, it sends a code; for dashboard login (`isDashboardLogin: true`), it first validates the user's existence and permissions.
+*   **`verifySignInCode(String email, String code, {bool isDashboardLogin = false})`**: Verifies the email code. For standard flows, it signs in or creates a user. For dashboard login (`isDashboardLogin: true`), it strictly performs a login and does not create new accounts. Returns a `Future<AuthSuccessResponse>`.
+*   **`signInAnonymously()`**: Signs the user in anonymously, creating a temporary user identity on the backend and returning a `Future<AuthSuccessResponse>` containing the anonymous `User` and token.
+*   **`signOut()`**: Signs out the current user (normal or anonymous).
+*   **`linkEmail(String email)`**: Initiates the process of linking an email to an existing anonymous account.
+*   **`verifyLinkEmail(String code)`**: Completes the email linking process by verifying the code. On success, it returns a `Future<AuthSuccessResponse>` with the now-permanent user and a new token.
+*   **`deleteAccount()`**: Allows an authenticated user to delete their own account.
 
 Error handling is standardized using exceptions defined in the `ht_shared` package. Implementations must map underlying errors to appropriate `HtHttpException` subtypes.
 
@@ -51,13 +54,29 @@ Here's a conceptual example of how a consuming application (like a Flutter app u
 // Listen to authentication state changes
 final authSubscription = authClient.authStateChanges.listen((user) {
   if (user != null) {
-    print('User signed in: ${user.id}, Anonymous: ${user.isAnonymous}');
+    print('User signed in: ${user.id}, Roles: ${user.roles}');
     // Navigate to home screen, update UI
   } else {
     print('User signed out');
     // Navigate to login screen
   }
 });
+
+// --- Email+Code Flow (Dashboard Example) ---
+
+Future<void> startDashboardSignIn(String email) async {
+  try {
+    // For a privileged dashboard login, set the flag to true
+    await authClient.requestSignInCode(email, isDashboardLogin: true);
+    // Navigate to code entry screen
+  } on UnauthorizedException {
+    print('This email is not registered for dashboard access.');
+  } on ForbiddenException {
+    print('You do not have permission to access the dashboard.');
+  } catch (e) {
+    print('Failed to request code: $e');
+  }
+}
 
 // --- Email+Code Flow ---
 
